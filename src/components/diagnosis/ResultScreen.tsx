@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { MILESTONE_MAP } from "@/lib/data/milestones";
 import { AWAKENING_STAGES } from "@/lib/engine/awakening";
 import { generatePortrait } from "@/lib/narrative/generate";
@@ -11,19 +11,32 @@ export function ResultScreen() {
   const finalCreature = useGame((s) => s.finalCreature);
   const eras = useGame((s) => s.eras);
   const reset = useGame((s) => s.reset);
+  const headingRef = useRef<HTMLHeadingElement | null>(null);
 
   const portrait = useMemo(() => {
     if (!finalCreature || !eras) return null;
     return generatePortrait(finalCreature, eras);
   }, [finalCreature, eras]);
 
+  // 結果画面に入ったら、スクリーンリーダーが種名を読み上げるために
+  // 見出しへフォーカスを移す。ユーザーのスクロール位置もトップへ。
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "auto" });
+    }
+    headingRef.current?.focus();
+  }, []);
+
   if (!finalCreature || !eras || !portrait) return null;
 
   const awakeningLabel = AWAKENING_STAGES[finalCreature.emotionAwakening];
 
   return (
-    <main className="flex flex-1 flex-col items-center px-6 py-16">
-      <div className="w-full max-w-2xl space-y-14">
+    <main
+      className="flex flex-1 flex-col items-center px-5 py-12 sm:px-6 sm:py-16"
+      aria-labelledby="result-name"
+    >
+      <div className="w-full max-w-2xl space-y-12 sm:space-y-14">
         {/* --- Header / Portrait --- */}
         <motion.header
           className="text-center space-y-4"
@@ -34,7 +47,12 @@ export function ResultScreen() {
           <p className="font-serif-jp text-xs tracking-[0.4em] text-muted">
             RESULT
           </p>
-          <h1 className="font-serif-jp text-3xl leading-relaxed tracking-wide sm:text-4xl">
+          <h1
+            ref={headingRef}
+            id="result-name"
+            tabIndex={-1}
+            className="font-serif-jp text-[1.75rem] leading-relaxed tracking-wide outline-none sm:text-4xl"
+          >
             {portrait.name}
           </h1>
           <p className="text-xs tracking-wider text-muted">
@@ -44,12 +62,12 @@ export function ResultScreen() {
 
         {/* --- Poetic description --- */}
         <motion.section
-          className="space-y-6"
+          aria-label="肖像"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.9, delay: 0.3, ease: "easeOut" }}
         >
-          <p className="font-serif-jp text-base leading-loose sm:text-lg">
+          <p className="font-serif-jp text-base leading-[2] sm:text-lg">
             {portrait.description}
           </p>
         </motion.section>
@@ -57,8 +75,8 @@ export function ResultScreen() {
         <Divider />
 
         {/* --- Era timeline --- */}
-        <section className="space-y-6">
-          <SectionTitle>系譜</SectionTitle>
+        <section aria-labelledby="title-timeline" className="space-y-6">
+          <SectionTitle id="title-timeline">系譜</SectionTitle>
           <ol className="space-y-5">
             {finalCreature.eraHistory.map((result, idx) => {
               const era = eras[result.eraIndex];
@@ -69,16 +87,16 @@ export function ResultScreen() {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.4, delay: 0.5 + idx * 0.1 }}
                 >
-                  <div className="flex items-baseline justify-between">
-                    <span className="font-serif-jp text-sm tracking-wider">
+                  <div className="flex items-baseline justify-between gap-3">
+                    <span className="font-serif-jp text-sm tracking-wider sm:text-base">
                       第{result.eraIndex + 1}期　{era.biomeLabel}
                     </span>
-                    <span className="text-xs text-muted">
+                    <span className="text-xs text-muted whitespace-nowrap">
                       {era.title}
                       {result.extinct ? " · 絶滅" : ""}
                     </span>
                   </div>
-                  <p className="mt-1.5 text-sm leading-7 text-foreground/90">
+                  <p className="mt-1.5 text-[0.95rem] leading-7 text-foreground/90 sm:text-base">
                     {result.narrative}
                   </p>
                 </motion.li>
@@ -91,8 +109,8 @@ export function ResultScreen() {
         {finalCreature.milestones.length > 0 && (
           <>
             <Divider />
-            <section className="space-y-4">
-              <SectionTitle>
+            <section aria-labelledby="title-milestones" className="space-y-4">
+              <SectionTitle id="title-milestones">
                 到達した特性（{finalCreature.milestones.length}）
               </SectionTitle>
               <ul className="flex flex-wrap gap-2">
@@ -103,8 +121,8 @@ export function ResultScreen() {
                     <li
                       key={id}
                       className="border border-line px-3 py-1.5 font-serif-jp text-sm tracking-wider"
-                      title={meta.group}
                     >
+                      <span className="sr-only">{meta.group}の特性：</span>
                       {meta.name}
                     </li>
                   );
@@ -116,28 +134,28 @@ export function ResultScreen() {
 
         {/* --- Awakening --- */}
         <Divider />
-        <section className="space-y-3">
-          <SectionTitle>感情の芽生え</SectionTitle>
-          <div className="flex items-baseline gap-4">
+        <section aria-labelledby="title-awakening" className="space-y-3">
+          <SectionTitle id="title-awakening">感情の芽生え</SectionTitle>
+          <p className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
             <span className="font-serif-jp text-2xl tracking-wider">
               {finalCreature.emotionAwakening}
             </span>
             <span className="text-xs text-muted">/ 9</span>
-            <span className="font-serif-jp text-sm">
+            <span className="font-serif-jp text-sm sm:text-base">
               {awakeningLabel}
             </span>
-          </div>
+          </p>
           <p className="text-xs leading-6 text-muted">
             ゼロは感情なき理想の生存状態。九は「悟り」—感情が完全に芽生えた結果の絶滅。
           </p>
         </section>
 
         {/* --- Footer --- */}
-        <div className="pt-10 text-center">
+        <div className="pt-8 text-center sm:pt-10">
           <button
             type="button"
             onClick={reset}
-            className="border border-accent px-10 py-3 font-serif-jp text-sm tracking-[0.25em] text-accent transition hover:bg-accent hover:text-background"
+            className="min-h-[3rem] border border-accent px-10 py-3 font-serif-jp text-sm tracking-[0.25em] text-accent transition hover:bg-accent hover:text-background active:bg-accent active:text-background"
           >
             もう一度
           </button>
@@ -147,14 +165,23 @@ export function ResultScreen() {
   );
 }
 
-function SectionTitle({ children }: { children: React.ReactNode }) {
+function SectionTitle({
+  children,
+  id,
+}: {
+  children: React.ReactNode;
+  id?: string;
+}) {
   return (
-    <h3 className="font-serif-jp text-xs tracking-[0.3em] text-muted">
+    <h2
+      id={id}
+      className="font-serif-jp text-xs tracking-[0.3em] text-muted"
+    >
       {children}
-    </h3>
+    </h2>
   );
 }
 
 function Divider() {
-  return <div className="h-px w-full bg-line" />;
+  return <div className="h-px w-full bg-line" role="presentation" />;
 }

@@ -39,13 +39,23 @@ export function SimulatingScreen() {
   const era = result ? eras[result.eraIndex] : null;
 
   return (
-    <main className="flex flex-1 flex-col items-center justify-center px-6 py-20">
+    <main
+      className="flex flex-1 flex-col items-center justify-center px-5 py-16 sm:px-6 sm:py-20"
+      aria-labelledby="simulating-label"
+    >
       <div className="w-full max-w-xl text-center">
-        <p className="font-serif-jp text-xs tracking-[0.4em] text-muted">
+        <p
+          id="simulating-label"
+          className="font-serif-jp text-xs tracking-[0.4em] text-muted"
+        >
           SIMULATING
         </p>
 
-        <div className="relative mt-12 min-h-[10rem]">
+        <div
+          className="relative mt-10 min-h-[11rem] sm:mt-12"
+          aria-live="polite"
+          aria-atomic="true"
+        >
           <AnimatePresence mode="wait">
             {era && result ? (
               <motion.div
@@ -56,13 +66,13 @@ export function SimulatingScreen() {
                 transition={{ duration: 0.38, ease: "easeOut" }}
                 className="space-y-3"
               >
-                <p className="font-serif-jp text-[0.65rem] tracking-[0.35em] text-muted">
+                <p className="font-serif-jp text-[0.7rem] tracking-[0.35em] text-muted">
                   第{result.eraIndex + 1}期 ・ {era.title}
                 </p>
                 <h2 className="font-serif-jp text-2xl leading-relaxed tracking-wider sm:text-3xl">
                   {era.biomeLabel}
                 </h2>
-                <p className="mx-auto max-w-md text-xs leading-6 text-foreground/70 sm:text-sm">
+                <p className="mx-auto max-w-md text-sm leading-7 text-foreground/70 sm:text-base">
                   {oneLine(result.narrative)}
                 </p>
                 {result.extinct && (
@@ -93,13 +103,21 @@ export function SimulatingScreen() {
           </AnimatePresence>
         </div>
 
-        <div className="mx-auto mt-12 flex items-center justify-center gap-1.5">
+        <div
+          className="mx-auto mt-10 flex items-center justify-center gap-1.5 sm:mt-12"
+          role="progressbar"
+          aria-label="進化の進捗"
+          aria-valuemin={0}
+          aria-valuemax={history.length}
+          aria-valuenow={Math.max(0, currentIdx + 1)}
+        >
           {history.map((h, i) => {
             const active = i <= currentIdx;
             const extinct = h.extinct;
             return (
               <motion.div
                 key={i}
+                aria-hidden="true"
                 className={`h-[2px] w-10 ${
                   active
                     ? extinct
@@ -107,7 +125,7 @@ export function SimulatingScreen() {
                       : "bg-accent"
                     : "bg-line"
                 }`}
-                initial={{ scaleX: 0.4, opacity: 0.4 }}
+                initial={false}
                 animate={{
                   scaleX: active ? 1 : 0.4,
                   opacity: active ? 1 : 0.4,

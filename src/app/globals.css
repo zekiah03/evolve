@@ -33,8 +33,32 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans-jp), sans-serif;
   font-feature-settings: "palt";
+  /* Mobile-first: avoid iOS auto-zoom on tap, enable hyphenation */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 .font-serif-jp {
   font-family: var(--font-serif-jp), serif;
+}
+
+/* Keyboard focus — visible outline on all interactive elements. */
+:focus {
+  outline: none;
+}
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* Respect the user's reduced-motion preference. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

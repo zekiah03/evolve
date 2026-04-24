@@ -1,5 +1,6 @@
 "use client";
 
+import { MotionConfig } from "framer-motion";
 import { useEffect } from "react";
 import { IntroScreen } from "./IntroScreen";
 import { QuestionCard } from "./QuestionCard";
@@ -24,6 +25,14 @@ export function DiagnosisFlow() {
     return () => window.clearTimeout(t);
   }, [phase, eraCount, finishSimulating]);
 
+  return (
+    <MotionConfig reducedMotion="user">
+      {renderPhase(phase)}
+    </MotionConfig>
+  );
+}
+
+function renderPhase(phase: ReturnType<typeof useGame.getState>["phase"]) {
   switch (phase) {
     case "intro":
       return <IntroScreen />;
