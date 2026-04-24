@@ -1,5 +1,5 @@
-// Smoke test for emotion → creature mapping
-// Run: npx tsx scripts/smoke.mts
+// Smoke test for engine
+// Run: npx tsx scripts/smoke.ts
 
 import { emotionToCreature } from "../src/lib/engine/emotionToCreature";
 import { environmentToEras } from "../src/lib/engine/environmentToEras";
@@ -7,6 +7,7 @@ import {
   computeEmotionProfile,
   computeEnvironmentProfile,
 } from "../src/lib/engine/profile";
+import { simulateAll } from "../src/lib/engine/simulator";
 import { PARAMS } from "../src/lib/data/parameters";
 import type {
   AnswerIndex,
@@ -111,3 +112,54 @@ function showEras(label: string, answers: AnswerIndex[]) {
 
 showEras("全てA", allA);
 showEras("全てD（逆側）", [3, 3, 3, 3, 3, 3]);
+
+// ---- 7: 完全なシミュレーション (感情全A × 環境全A) ----
+function runSimulation(
+  label: string,
+  emotionAnswers: AnswerIndex[],
+  envAnswers: AnswerIndex[],
+) {
+  console.log(`\n\n============ シミュレーション: ${label} ============`);
+  const eProfile = computeEmotionProfile(emotionAnswers);
+  const envP = computeEnvironmentProfile(envAnswers);
+  console.log("感情:", eProfile);
+  console.log("環境:", envP);
+  const initial = emotionToCreature(eProfile);
+  const eras = environmentToEras(envAnswers);
+  const final = simulateAll(initial, eras);
+
+  for (const result of final.eraHistory) {
+    const era = eras[result.eraIndex];
+    console.log(
+      `\n[E${result.eraIndex + 1}] ${era.title}「${era.biomeLabel}」  stress=${result.stress}  awakening=${result.emotionStage}${result.extinct ? " 💀" : ""}`,
+    );
+    if (result.mutations.length > 0) {
+      console.log(
+        `  変異: ${result.mutations.map((m) => m.phenomenon).join(" / ")}`,
+      );
+    }
+    console.log(`  ${result.narrative}`);
+  }
+
+  console.log(`\n--- 最終状態 ---`);
+  console.log(`生存: ${final.alive ? "◯" : "✕"}`);
+  console.log(`感情段階: ${final.emotionAwakening}`);
+  console.log(`現象名履歴: ${final.phenomena.join(" → ")}`);
+  console.log(`最終カテゴリ:`, final.categories);
+  const nonZero = PARAMS.filter((p) => final.params[p.id] !== 0)
+    .map((p) => `${p.label}=${final.params[p.id]}`)
+    .join(", ");
+  console.log(`最終パラメータ: ${nonZero}`);
+}
+
+runSimulation("感情全A × 環境全A", allA, allA);
+runSimulation(
+  "感情全D × 環境全D（孤高・地下）",
+  [3, 3, 3, 3, 3, 3],
+  [3, 3, 3, 3, 3, 3],
+);
+runSimulation(
+  "感情: 知能特化 (C優勢) × 環境: 安定地 (A)",
+  [2, 2, 2, 2, 2, 2],
+  allA,
+);
