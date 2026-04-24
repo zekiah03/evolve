@@ -138,12 +138,18 @@ function runSimulation(
         `  変異: ${result.mutations.map((m) => m.phenomenon).join(" / ")}`,
       );
     }
+    if (result.triggeredMilestones.length > 0) {
+      console.log(
+        `  ★マイルストーン: ${result.triggeredMilestones.join(" / ")}`,
+      );
+    }
     console.log(`  ${result.narrative}`);
   }
 
   console.log(`\n--- 最終状態 ---`);
   console.log(`生存: ${final.alive ? "◯" : "✕"}`);
   console.log(`感情段階: ${final.emotionAwakening}`);
+  console.log(`達成マイルストーン(${final.milestones.length}): ${final.milestones.join(", ")}`);
   console.log(`現象名履歴: ${final.phenomena.join(" → ")}`);
   console.log(`最終カテゴリ:`, final.categories);
   const nonZero = PARAMS.filter((p) => final.params[p.id] !== 0)

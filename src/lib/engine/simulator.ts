@@ -1,5 +1,6 @@
 import type { Creature, Era, EraResult, Mutation } from "../types";
 import { advanceAwakening } from "./awakening";
+import { checkMilestones } from "./checkMilestones";
 import {
   applyMutation,
   selectCategoryMutations,
@@ -38,6 +39,9 @@ export function simulateEra(creature: Creature, era: Era): EraResult {
 
   for (const m of mutations) applyMutation(creature, m);
 
+  // マイルストーン判定（変異の結果、組み合わせ条件を満たしたか）
+  const triggeredMilestones = checkMilestones(creature);
+
   // 感情の芽生え判定（変異後、知能等が上がっているかもしれない）
   const awakening = advanceAwakening(creature);
   if (awakening.advanced && awakening.event) {
@@ -52,10 +56,17 @@ export function simulateEra(creature: Creature, era: Era): EraResult {
     eraIndex: era.index,
     stress: roundStress(stress.total),
     mutations,
-    triggeredMilestones: [], // step 4 で追加予定
+    triggeredMilestones,
     emotionStage: creature.emotionAwakening,
     extinct,
-    narrative: composeNarrative(era, stress, mutations, extinct, awakening.event),
+    narrative: composeNarrative(
+      era,
+      stress,
+      mutations,
+      extinct,
+      awakening.event,
+      triggeredMilestones,
+    ),
   };
 
   creature.eraHistory.push(result);
@@ -106,6 +117,7 @@ function composeNarrative(
   mutations: Mutation[],
   extinct: boolean,
   awakeningEvent?: string,
+  triggeredMilestones: string[] = [],
 ): string {
   if (extinct && awakeningEvent) {
     return `${era.biomeLabel}にて、${awakeningEvent}が訪れ、ついに絶えた。`;
@@ -113,15 +125,23 @@ function composeNarrative(
   if (extinct) {
     return `${era.biomeLabel}は厳しすぎた。適応しきれず、その系譜はここで絶えた。`;
   }
+
+  const milestoneTail =
+    triggeredMilestones.length > 0
+      ? `。折しも${triggeredMilestones.join("・")}が現れた`
+      : "";
+  const awakeningTail = awakeningEvent ? `。そして${awakeningEvent}が兆した` : "";
+
   if (mutations.length === 0) {
-    return `${era.biomeLabel}には、ほとんど苦もなく馴染んだ。`;
+    return `${era.biomeLabel}には、ほとんど苦もなく馴染んだ${milestoneTail}${awakeningTail}。`;
   }
+
   const names = mutations.map((m) => m.phenomenon).join("・");
-  const tension = stress.total > HEAVY_MUTATE_THRESHOLD
-    ? "激しく揺さぶられながら"
-    : stress.total > MUTATE_THRESHOLD
-      ? "痛みを伴いながら"
-      : "ゆっくりと";
-  const tail = awakeningEvent ? `。そして${awakeningEvent}が兆した` : "";
-  return `${era.biomeLabel}を生き抜くため、${tension}${names}が起きた${tail}。`;
+  const tension =
+    stress.total > HEAVY_MUTATE_THRESHOLD
+      ? "激しく揺さぶられながら"
+      : stress.total > MUTATE_THRESHOLD
+        ? "痛みを伴いながら"
+        : "ゆっくりと";
+  return `${era.biomeLabel}を生き抜くため、${tension}${names}が起きた${milestoneTail}${awakeningTail}。`;
 }

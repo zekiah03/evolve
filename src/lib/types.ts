@@ -206,6 +206,41 @@ export type CategoryMeta = {
   defaultValue: string;
 };
 
+// ==================== Milestones ====================
+
+export type MilestoneGroup =
+  | "感覚"
+  | "身体"
+  | "知性"
+  | "社会"
+  | "繁殖"
+  | "生化学"
+  | "極限"
+  | "物語"
+  | "退化"
+  | "ハイブリッド"
+  | "超進化";
+
+export type ParamCondition = {
+  param: ParamId;
+  min?: number;
+  max?: number;
+};
+
+export type CategoryCondition = {
+  category: CategoryId;
+  in: string[];
+};
+
+export type MilestoneRule = {
+  id: string;
+  name: string;
+  group: MilestoneGroup;
+  description?: string;
+  paramConditions?: ParamCondition[];
+  categoryConditions?: CategoryCondition[];
+};
+
 // ==================== Creature ====================
 
 export type Creature = {
