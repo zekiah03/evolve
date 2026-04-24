@@ -95,30 +95,30 @@ export const useGame = create<GameState>((set, get) => ({
       if (questionIndex < ENVIRONMENT_QUESTIONS.length - 1) {
         set({ questionIndex: questionIndex + 1 });
       } else {
-        // 最終問いの次は演出フェーズへ。本計算は finishSimulating で走る。
-        set({ phase: "simulating" });
+        // 最終問いの次は演出フェーズへ。
+        // シミュレーション結果をこの時点で事前計算し、演出中に参照できるようにする。
+        const { emotionAnswers, environmentAnswers } = get();
+        const emotionProfile = computeEmotionProfile(emotionAnswers);
+        const environmentProfile = computeEnvironmentProfile(environmentAnswers);
+        const initialCreature = emotionToCreature(emotionProfile);
+        const eras = environmentToEras(environmentAnswers);
+        const finalCreature = simulateAll(initialCreature, eras);
+        set({
+          phase: "simulating",
+          emotionProfile,
+          environmentProfile,
+          initialCreature,
+          eras,
+          finalCreature,
+        });
       }
     }
   },
 
   finishSimulating: () => {
-    const { emotionAnswers, environmentAnswers, phase } = get();
+    const { phase } = get();
     if (phase !== "simulating") return;
-
-    const emotionProfile = computeEmotionProfile(emotionAnswers);
-    const environmentProfile = computeEnvironmentProfile(environmentAnswers);
-    const initialCreature = emotionToCreature(emotionProfile);
-    const eras = environmentToEras(environmentAnswers);
-    const finalCreature = simulateAll(initialCreature, eras);
-
-    set({
-      phase: "result",
-      emotionProfile,
-      environmentProfile,
-      initialCreature,
-      eras,
-      finalCreature,
-    });
+    set({ phase: "result" });
   },
 
   reset: () => {
