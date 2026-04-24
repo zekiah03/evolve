@@ -35,7 +35,8 @@ type GameState = {
   start: () => void;
   answer: (choice: 0 | 1 | 2 | 3) => void;
   next: () => void;
-  simulate: () => void;
+  /** simulating フェーズ演出の最後で呼び、結果を実際に計算して result へ遷移する。 */
+  finishSimulating: () => void;
   reset: () => void;
 };
 
@@ -44,7 +45,7 @@ const emptyAnswers = (): AnswerIndex[] =>
 
 const INITIAL: Omit<
   GameState,
-  "start" | "answer" | "next" | "simulate" | "reset"
+  "start" | "answer" | "next" | "finishSimulating" | "reset"
 > = {
   phase: "intro",
   questionIndex: 0,
@@ -94,14 +95,15 @@ export const useGame = create<GameState>((set, get) => ({
       if (questionIndex < ENVIRONMENT_QUESTIONS.length - 1) {
         set({ questionIndex: questionIndex + 1 });
       } else {
-        get().simulate();
+        // 最終問いの次は演出フェーズへ。本計算は finishSimulating で走る。
+        set({ phase: "simulating" });
       }
     }
   },
 
-  simulate: () => {
-    const { emotionAnswers, environmentAnswers } = get();
-    set({ phase: "simulating" });
+  finishSimulating: () => {
+    const { emotionAnswers, environmentAnswers, phase } = get();
+    if (phase !== "simulating") return;
 
     const emotionProfile = computeEmotionProfile(emotionAnswers);
     const environmentProfile = computeEnvironmentProfile(environmentAnswers);
