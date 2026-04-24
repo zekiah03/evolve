@@ -2,6 +2,7 @@
 // Run: npx tsx scripts/smoke.mts
 
 import { emotionToCreature } from "../src/lib/engine/emotionToCreature";
+import { environmentToEras } from "../src/lib/engine/environmentToEras";
 import {
   computeEmotionProfile,
   computeEnvironmentProfile,
@@ -80,3 +81,33 @@ console.log(
 console.log("\n=== 環境診断: 全てAを選んだ場合 ===");
 const env = computeEnvironmentProfile(allA);
 console.log("env profile:", env);
+
+function showEras(label: string, answers: AnswerIndex[]) {
+  console.log(`\n=== エラ列: ${label} ===`);
+  const eras = environmentToEras(answers);
+  for (const era of eras) {
+    console.log(
+      `\n[E${era.index + 1}] ${era.title}「${era.biomeLabel}」`,
+    );
+    console.log(`  axes:`, era.axes);
+    console.log(
+      `  要求パラメータ (${era.requirements.length}):`,
+      era.requirements
+        .map(
+          (r) => `${r.param}=${r.target > 0 ? "+" : ""}${r.target}`,
+        )
+        .join(", "),
+    );
+    if (era.categoryRequirements.length > 0) {
+      console.log(
+        `  要求カテゴリ:`,
+        era.categoryRequirements
+          .map((c) => `${c.category}∈{${c.preferred.join("/")}}`)
+          .join(", "),
+      );
+    }
+  }
+}
+
+showEras("全てA", allA);
+showEras("全てD（逆側）", [3, 3, 3, 3, 3, 3]);

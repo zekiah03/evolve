@@ -224,11 +224,26 @@ export type Creature = {
 
 // ==================== Eras ====================
 
+export type ParamRequirement = {
+  param: ParamId;
+  target: number; // エラが要求する理想値 (-2..+2)
+  weight: number; // ストレス計算時の重み
+};
+
+export type CategoryRequirement = {
+  category: CategoryId;
+  preferred: string[]; // 適合する値のリスト（その他は不適）
+  weight: number;
+};
+
 export type Era = {
   index: 0 | 1 | 2 | 3 | 4 | 5;
-  title: string;
-  role: string; // 「誕生の地」など、エラの物語役割
-  axes: Partial<Record<EnvironmentAxisId, AxisValue>>;
+  title: string; // 「誕生の地」など、エラの物語役割
+  biomeLabel: string; // 「熱帯の砂浜」など、エラの具体名
+  narrative: string; // エラの短い描写
+  axes: Partial<Record<EnvironmentAxisId, AxisValue>>; // そのエラでアクティブな2軸
+  requirements: ParamRequirement[];
+  categoryRequirements: CategoryRequirement[];
 };
 
 export type Mutation = {
