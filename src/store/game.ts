@@ -8,6 +8,7 @@ import {
   computeEnvironmentProfile,
 } from "@/lib/engine/profile";
 import { simulateAll } from "@/lib/engine/simulator";
+import { decodeAnswers } from "@/lib/share";
 import type {
   AnswerIndex,
   Creature,
@@ -37,6 +38,8 @@ type GameState = {
   next: () => void;
   /** simulating フェーズ演出の最後で呼び、結果を実際に計算して result へ遷移する。 */
   finishSimulating: () => void;
+  /** URLパラメータ等から12問の回答を復元し、結果画面まで一気に進める。 */
+  loadFromShareCode: (code: string) => boolean;
   reset: () => void;
 };
 
@@ -45,7 +48,7 @@ const emptyAnswers = (): AnswerIndex[] =>
 
 const INITIAL: Omit<
   GameState,
-  "start" | "answer" | "next" | "finishSimulating" | "reset"
+  "start" | "answer" | "next" | "finishSimulating" | "loadFromShareCode" | "reset"
 > = {
   phase: "intro",
   questionIndex: 0,
@@ -119,6 +122,30 @@ export const useGame = create<GameState>((set, get) => ({
     const { phase } = get();
     if (phase !== "simulating") return;
     set({ phase: "result" });
+  },
+
+  loadFromShareCode: (code) => {
+    const decoded = decodeAnswers(code);
+    if (!decoded) return false;
+    const emotionAnswers: AnswerIndex[] = decoded.emotion;
+    const environmentAnswers: AnswerIndex[] = decoded.environment;
+    const emotionProfile = computeEmotionProfile(emotionAnswers);
+    const environmentProfile = computeEnvironmentProfile(environmentAnswers);
+    const initialCreature = emotionToCreature(emotionProfile);
+    const eras = environmentToEras(environmentAnswers);
+    const finalCreature = simulateAll(initialCreature, eras);
+    set({
+      phase: "result",
+      questionIndex: 0,
+      emotionAnswers,
+      environmentAnswers,
+      emotionProfile,
+      environmentProfile,
+      initialCreature,
+      eras,
+      finalCreature,
+    });
+    return true;
   },
 
   reset: () => {

@@ -1,15 +1,18 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { MILESTONE_MAP } from "@/lib/data/milestones";
 import { AWAKENING_STAGES } from "@/lib/engine/awakening";
 import { generatePortrait } from "@/lib/narrative/generate";
+import { buildShareUrl, encodeAnswers } from "@/lib/share";
 import { useGame } from "@/store/game";
 
 export function ResultScreen() {
   const finalCreature = useGame((s) => s.finalCreature);
   const eras = useGame((s) => s.eras);
+  const emotionAnswers = useGame((s) => s.emotionAnswers);
+  const environmentAnswers = useGame((s) => s.environmentAnswers);
   const reset = useGame((s) => s.reset);
   const headingRef = useRef<HTMLHeadingElement | null>(null);
 
@@ -17,6 +20,12 @@ export function ResultScreen() {
     if (!finalCreature || !eras) return null;
     return generatePortrait(finalCreature, eras);
   }, [finalCreature, eras]);
+
+  const shareUrl = useMemo(() => {
+    const code = encodeAnswers(emotionAnswers, environmentAnswers);
+    if (!code) return null;
+    return buildShareUrl(code);
+  }, [emotionAnswers, environmentAnswers]);
 
   // 結果画面に入ったら、スクリーンリーダーが種名を読み上げるために
   // 見出しへフォーカスを移す。ユーザーのスクロール位置もトップへ。
@@ -151,7 +160,8 @@ export function ResultScreen() {
         </section>
 
         {/* --- Footer --- */}
-        <div className="pt-8 text-center sm:pt-10">
+        <div className="pt-8 flex flex-col items-center gap-4 sm:pt-10 sm:flex-row sm:justify-center">
+          {shareUrl && <ShareButton url={shareUrl} />}
           <button
             type="button"
             onClick={reset}
@@ -162,6 +172,44 @@ export function ResultScreen() {
         </div>
       </div>
     </main>
+  );
+}
+
+function ShareButton({ url }: { url: string }) {
+  const [state, setState] = useState<"idle" | "copied" | "error">("idle");
+
+  const handleClick = async () => {
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+        setState("copied");
+      } else {
+        // 非対応環境は URL を prompt で表示するフォールバック
+        window.prompt("このURLを共有できます", url);
+        setState("copied");
+      }
+    } catch {
+      setState("error");
+    }
+    window.setTimeout(() => setState("idle"), 2400);
+  };
+
+  const label =
+    state === "copied"
+      ? "コピーしました"
+      : state === "error"
+        ? "コピー失敗"
+        : "リンクをコピー";
+
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      aria-live="polite"
+      className="min-h-[3rem] border border-line px-8 py-3 font-serif-jp text-sm tracking-[0.25em] text-muted transition hover:border-accent hover:text-accent active:border-accent active:text-accent"
+    >
+      {label}
+    </button>
   );
 }
 
