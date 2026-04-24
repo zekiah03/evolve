@@ -158,6 +158,23 @@ function runSimulation(
   console.log(`最終パラメータ: ${nonZero}`);
 }
 
+import { generatePortrait } from "../src/lib/narrative/generate";
+
+function showPortrait(
+  label: string,
+  emotionAnswers: AnswerIndex[],
+  envAnswers: AnswerIndex[],
+) {
+  const initial = emotionToCreature(computeEmotionProfile(emotionAnswers));
+  const eras = environmentToEras(envAnswers);
+  const final = simulateAll(initial, eras);
+  const portrait = generatePortrait(final, eras);
+  console.log(`\n━━━ ${label} ━━━`);
+  console.log(`名: ${portrait.name}`);
+  console.log(`状態: ${portrait.subtitle}`);
+  console.log(`説明: ${portrait.description}`);
+}
+
 runSimulation("感情全A × 環境全A", allA, allA);
 runSimulation(
   "感情全D × 環境全D（孤高・地下）",
@@ -168,4 +185,22 @@ runSimulation(
   "感情: 知能特化 (C優勢) × 環境: 安定地 (A)",
   [2, 2, 2, 2, 2, 2],
   allA,
+);
+
+console.log("\n\n============ 最終生物の肖像 ============");
+showPortrait("感情全A × 環境全A", allA, allA);
+showPortrait(
+  "感情全D × 環境全D",
+  [3, 3, 3, 3, 3, 3],
+  [3, 3, 3, 3, 3, 3],
+);
+showPortrait(
+  "内包・熟慮 × 熱帯",
+  [2, 2, 2, 2, 2, 2],
+  allA,
+);
+showPortrait(
+  "感情 B × 環境 C（独自×暗い静けさ）",
+  [1, 1, 1, 1, 1, 1],
+  [2, 2, 2, 2, 2, 2],
 );
