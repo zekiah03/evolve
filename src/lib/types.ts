@@ -206,6 +206,36 @@ export type CategoryMeta = {
   defaultValue: string;
 };
 
+// ==================== Species Atlas ====================
+
+export type SpeciesGroup =
+  | "哺乳類"
+  | "鳥類"
+  | "爬虫類"
+  | "両生類"
+  | "魚類"
+  | "軟体動物"
+  | "節足動物"
+  | "甲殻類"
+  | "棘皮動物"
+  | "刺胞動物"
+  | "環形動物"
+  | "微生物"
+  | "植物"
+  | "菌類";
+
+export type SpeciesFingerprint = {
+  id: string;
+  name: string;
+  group: SpeciesGroup;
+  /** 短い詩的な見出し（例: 「氷の影」「永遠の眠り」） */
+  epithet: string;
+  /** 各パラメータの「典型値」。書かなかった項目は0扱い。 */
+  params: Partial<Record<ParamId, number>>;
+  /** 体表・移動層など、その種の象徴的なカテゴリだけ書く。 */
+  categories?: Partial<{ [K in CategoryId]: CategoryValues[K] }>;
+};
+
 // ==================== Milestones ====================
 
 export type MilestoneGroup =

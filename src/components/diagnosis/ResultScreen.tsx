@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { MILESTONE_MAP } from "@/lib/data/milestones";
 import { AWAKENING_STAGES } from "@/lib/engine/awakening";
 import { generatePortrait } from "@/lib/narrative/generate";
+import { findClosestSpecies } from "@/lib/narrative/matchSpecies";
 import { buildShareUrl, encodeAnswers } from "@/lib/share";
 import { useGame } from "@/store/game";
 
@@ -20,6 +21,11 @@ export function ResultScreen() {
     if (!finalCreature || !eras) return null;
     return generatePortrait(finalCreature, eras);
   }, [finalCreature, eras]);
+
+  const cousins = useMemo(() => {
+    if (!finalCreature) return [];
+    return findClosestSpecies(finalCreature, 3);
+  }, [finalCreature]);
 
   const shareUrl = useMemo(() => {
     const code = encodeAnswers(emotionAnswers, environmentAnswers);
@@ -113,6 +119,41 @@ export function ResultScreen() {
             })}
           </ol>
         </section>
+
+        {/* --- Earth cousins --- */}
+        {cousins.length > 0 && (
+          <>
+            <Divider />
+            <section aria-labelledby="title-cousins" className="space-y-4">
+              <SectionTitle id="title-cousins">地球の兄弟</SectionTitle>
+              <p className="font-serif-jp text-sm leading-8 text-foreground/90 sm:text-base">
+                その肖像に最も近いのは、
+              </p>
+              <ul className="space-y-2">
+                {cousins.map((sp) => (
+                  <motion.li
+                    key={sp.id}
+                    initial={{ opacity: 0, x: -6 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.4 }}
+                    className="flex flex-wrap items-baseline gap-x-3 gap-y-1"
+                  >
+                    <span className="font-serif-jp text-base sm:text-lg">
+                      {sp.name}
+                    </span>
+                    <span className="text-xs text-muted">— {sp.epithet}</span>
+                    <span className="text-[0.65rem] tracking-widest text-muted/70">
+                      {sp.group}
+                    </span>
+                  </motion.li>
+                ))}
+              </ul>
+              <p className="font-serif-jp text-sm leading-8 text-foreground/90 sm:text-base">
+                の三体である。
+              </p>
+            </section>
+          </>
+        )}
 
         {/* --- Milestones --- */}
         {finalCreature.milestones.length > 0 && (

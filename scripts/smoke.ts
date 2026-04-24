@@ -187,6 +187,29 @@ runSimulation(
   allA,
 );
 
+import { findClosestSpecies } from "../src/lib/narrative/matchSpecies";
+
+function showMatches(
+  label: string,
+  emotionAns: AnswerIndex[],
+  envAns: AnswerIndex[],
+) {
+  const initial = emotionToCreature(computeEmotionProfile(emotionAns));
+  const eras = environmentToEras(envAns);
+  const final = simulateAll(initial, eras);
+  const matches = findClosestSpecies(final, 5);
+  console.log(`\n━━ 地球の兄弟: ${label} ━━`);
+  for (const m of matches) {
+    console.log(
+      `  ${m.name}（${m.epithet}）  距離=${m.distance.toFixed(1)}  [${m.group}]`,
+    );
+  }
+}
+
+showMatches("派手群れ × 熱帯", allA, allA);
+showMatches("孤高 × 地下", [3, 3, 3, 3, 3, 3], [3, 3, 3, 3, 3, 3]);
+showMatches("内包熟慮 × 熱帯", [2, 2, 2, 2, 2, 2], allA);
+
 console.log("\n\n============ 最終生物の肖像 ============");
 showPortrait("感情全A × 環境全A", allA, allA);
 showPortrait(
