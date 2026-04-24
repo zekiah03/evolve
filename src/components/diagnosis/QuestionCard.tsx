@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef } from "react";
+import { useShallow } from "zustand/react/shallow";
 import {
   selectCanProceed,
   selectCurrentAnswer,
@@ -16,7 +17,9 @@ export function QuestionCard() {
   const question = useGame(selectCurrentQuestion);
   const answer = useGame(selectCurrentAnswer);
   const canProceed = useGame(selectCanProceed);
-  const { done, total } = useGame(selectProgress);
+  // selectProgress は { done, total } を返すので、参照比較だと毎回別オブジェクトに
+  // なりリレンダー無限ループを起こす。useShallow で内容比較に切り替える。
+  const { done, total } = useGame(useShallow(selectProgress));
   const phase = useGame((s) => s.phase);
   const questionIndex = useGame((s) => s.questionIndex);
   const answerAction = useGame((s) => s.answer);
