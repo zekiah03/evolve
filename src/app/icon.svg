@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <style>
+    .stem { stroke: #1a1814; stroke-width: 4; stroke-linecap: round; fill: none; }
+    .dot { fill: #1a1814; stroke: none; }
+    @media (prefers-color-scheme: dark) {
+      .stem { stroke: #e8e2d3; }
+      .dot { fill: #e8e2d3; }
+    }
+  </style>
+  <!-- 系統樹の分岐: 上の点から、下の二点へ枝が分かれる -->
+  <line class="stem" x1="32" y1="20" x2="32" y2="32" />
+  <line class="stem" x1="32" y1="32" x2="14" y2="48" />
+  <line class="stem" x1="32" y1="32" x2="50" y2="48" />
+  <circle class="dot" cx="32" cy="14" r="6" />
+  <circle class="dot" cx="14" cy="50" r="6" />
+  <circle class="dot" cx="50" cy="50" r="6" />
+</svg>
