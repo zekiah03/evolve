@@ -92,28 +92,111 @@ export function ResultScreen() {
         {/* --- Era timeline --- */}
         <section aria-labelledby="title-timeline" className="space-y-6">
           <SectionTitle id="title-timeline">系譜</SectionTitle>
-          <ol className="space-y-5">
+          <ol className="relative space-y-8 pl-7 sm:pl-8">
+            {/* 縦に通った進化の軸 */}
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute left-[10px] top-2 bottom-2 w-px bg-line sm:left-3"
+            />
             {finalCreature.eraHistory.map((result, idx) => {
               const era = eras[result.eraIndex];
+              const previousStage =
+                idx === 0
+                  ? 0
+                  : finalCreature.eraHistory[idx - 1].emotionStage;
+              const awakeningEvent =
+                result.emotionStage > previousStage
+                  ? AWAKENING_STAGES[result.emotionStage]
+                  : null;
               return (
                 <motion.li
                   key={result.eraIndex}
                   initial={{ opacity: 0, x: -8 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.4, delay: 0.5 + idx * 0.1 }}
+                  className="relative"
                 >
+                  {/* ノード（節点） */}
+                  <span
+                    aria-hidden="true"
+                    className={`absolute -left-7 top-2 inline-block h-[10px] w-[10px] rounded-full border border-accent sm:-left-8 sm:top-2.5 ${
+                      result.extinct
+                        ? "bg-background"
+                        : result.mutations.length > 0
+                          ? "bg-accent"
+                          : "bg-background"
+                    }`}
+                  />
+
+                  {/* エラ見出し */}
                   <div className="flex items-baseline justify-between gap-3">
-                    <span className="font-serif-jp text-sm tracking-wider sm:text-base">
-                      第{result.eraIndex + 1}期　{era.biomeLabel}
-                    </span>
-                    <span className="text-xs text-muted whitespace-nowrap">
-                      {era.title}
-                      {result.extinct ? " · 絶滅" : ""}
-                    </span>
+                    <p className="font-serif-jp text-[0.7rem] tracking-[0.3em] text-muted">
+                      第{result.eraIndex + 1}期 ・ {era.title}
+                    </p>
+                    {result.extinct && (
+                      <span className="font-serif-jp text-[0.65rem] tracking-[0.4em] text-muted">
+                        絶滅
+                      </span>
+                    )}
                   </div>
-                  <p className="mt-1.5 text-[0.95rem] leading-7 text-foreground/90 sm:text-base">
-                    {result.narrative}
-                  </p>
+                  <h3 className="mt-1 font-serif-jp text-lg leading-relaxed sm:text-xl">
+                    {era.biomeLabel}
+                  </h3>
+
+                  {/* 環境 → 変化（変異） */}
+                  {result.mutations.length > 0 ? (
+                    <ul className="mt-3 space-y-1.5">
+                      {result.mutations.map((m, i) => (
+                        <li
+                          key={`${result.eraIndex}-mut-${i}`}
+                          className="flex items-baseline gap-2.5"
+                        >
+                          <span
+                            aria-hidden="true"
+                            className="text-muted text-xs"
+                          >
+                            →
+                          </span>
+                          <span className="font-serif-jp text-[0.95rem] sm:text-base">
+                            {m.phenomenon}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="mt-3 text-sm text-muted">
+                      この時代には何も起きなかった。
+                    </p>
+                  )}
+
+                  {/* 解禁されたマイルストーン */}
+                  {result.triggeredMilestones.length > 0 && (
+                    <ul className="mt-3 space-y-1.5">
+                      {result.triggeredMilestones.map((name) => (
+                        <li
+                          key={`${result.eraIndex}-ms-${name}`}
+                          className="flex items-baseline gap-2.5"
+                        >
+                          <span
+                            aria-hidden="true"
+                            className="text-accent text-xs"
+                          >
+                            ★
+                          </span>
+                          <span className="font-serif-jp text-[0.95rem] sm:text-base">
+                            {name}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+
+                  {/* 感情の芽生え */}
+                  {awakeningEvent && (
+                    <p className="mt-3 font-serif-jp text-xs italic text-muted">
+                      — {awakeningEvent} が兆した —
+                    </p>
+                  )}
                 </motion.li>
               );
             })}
