@@ -4,6 +4,13 @@ import { motion } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { MILESTONE_MAP } from "@/lib/data/milestones";
 import { AWAKENING_STAGES } from "@/lib/engine/awakening";
+import {
+  AWAKENING_INFLUENCE_LABEL,
+  eraDrivers,
+  explainAwakening,
+  topEmotionAxes,
+  topTraits,
+} from "@/lib/narrative/explainEvolution";
 import { generatePortrait } from "@/lib/narrative/generate";
 import { findClosestSpecies } from "@/lib/narrative/matchSpecies";
 import { buildShareUrl, encodeAnswers } from "@/lib/share";
@@ -12,6 +19,7 @@ import { useGame } from "@/store/game";
 export function ResultScreen() {
   const finalCreature = useGame((s) => s.finalCreature);
   const eras = useGame((s) => s.eras);
+  const emotionProfile = useGame((s) => s.emotionProfile);
   const emotionAnswers = useGame((s) => s.emotionAnswers);
   const environmentAnswers = useGame((s) => s.environmentAnswers);
   const reset = useGame((s) => s.reset);
@@ -26,6 +34,16 @@ export function ResultScreen() {
     if (!finalCreature) return [];
     return findClosestSpecies(finalCreature, 3);
   }, [finalCreature]);
+
+  const logic = useMemo(() => {
+    if (!finalCreature || !eras || !emotionProfile) return null;
+    return {
+      axes: topEmotionAxes(emotionProfile, 3),
+      traits: topTraits(finalCreature, 6),
+      drivers: eraDrivers(eras, finalCreature),
+      awakening: explainAwakening(finalCreature),
+    };
+  }, [finalCreature, eras, emotionProfile]);
 
   const shareUrl = useMemo(() => {
     const code = encodeAnswers(emotionAnswers, environmentAnswers);
@@ -86,6 +104,90 @@ export function ResultScreen() {
             {portrait.description}
           </p>
         </motion.section>
+
+        {logic && (
+          <>
+            <Divider />
+            <section
+              aria-labelledby="title-logic"
+              className="space-y-7"
+            >
+              <SectionTitle id="title-logic">進化の論理</SectionTitle>
+
+              {/* 1. 核となった感情 */}
+              <div className="space-y-3">
+                <h3 className="font-serif-jp text-sm tracking-wider text-foreground/80">
+                  核となった感情
+                </h3>
+                <ul className="space-y-1.5">
+                  {logic.axes.map((a) => (
+                    <li
+                      key={a.axisId}
+                      className="flex items-baseline gap-3 text-sm sm:text-base"
+                    >
+                      <span className="font-serif-jp text-muted text-xs">
+                        {a.label}
+                      </span>
+                      <span className="font-serif-jp">{a.pole}</span>
+                      <span className="text-xs text-muted">
+                        ×{a.magnitude}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* 2. 環境が要求したもの（エラ別の主因） */}
+              <div className="space-y-3">
+                <h3 className="font-serif-jp text-sm tracking-wider text-foreground/80">
+                  環境が要求したもの
+                </h3>
+                <ul className="space-y-1.5">
+                  {logic.drivers.map((d) => (
+                    <li
+                      key={d.eraIndex}
+                      className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-sm sm:text-base"
+                    >
+                      <span className="font-serif-jp">{d.biome}</span>
+                      <span className="text-muted text-xs">
+                        ({d.drivingAxes})
+                      </span>
+                      <span className="text-muted text-xs">→</span>
+                      <span className="font-serif-jp">
+                        {d.primaryEffect ?? "馴染んだ"}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* 3. 体に残った印 */}
+              <div className="space-y-3">
+                <h3 className="font-serif-jp text-sm tracking-wider text-foreground/80">
+                  体に残った印
+                </h3>
+                <ul className="flex flex-wrap gap-x-4 gap-y-1.5 text-sm sm:text-base">
+                  {logic.traits.map((t) => (
+                    <li
+                      key={t.paramId}
+                      className="font-serif-jp"
+                    >
+                      {t.label}{" "}
+                      <span className="text-muted text-xs">
+                        {t.value > 0 ? `+${t.value}` : t.value}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* 4. 感情覚醒の力学（dominant influence） */}
+              <p className="font-serif-jp text-sm italic text-muted leading-7">
+                — {AWAKENING_INFLUENCE_LABEL[logic.awakening.dominantInfluence]} —
+              </p>
+            </section>
+          </>
+        )}
 
         <Divider />
 
