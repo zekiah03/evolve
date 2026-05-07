@@ -1,6 +1,7 @@
 import type { Creature, Era, EraResult, Mutation } from "../types";
 import { advanceAwakening } from "./awakening";
 import { checkMilestones } from "./checkMilestones";
+import { enforceConstraints } from "./constraints";
 import {
   applyMutation,
   selectCategoryMutations,
@@ -38,6 +39,10 @@ export function simulateEra(creature: Creature, era: Era): EraResult {
   }
 
   for (const m of mutations) applyMutation(creature, m);
+
+  // 形質間の制約を強制（外骨格→知能上限、光合成→移動上限、巨大→代謝上限）
+  const constraintEvents = enforceConstraints(creature);
+  for (const ev of constraintEvents) creature.phenomena.push(ev.phenomenon);
 
   // マイルストーン判定（変異の結果、組み合わせ条件を満たしたか）
   const triggeredMilestones = checkMilestones(creature);
