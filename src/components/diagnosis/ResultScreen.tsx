@@ -8,6 +8,7 @@ import { generatePortrait } from "@/lib/narrative/generate";
 import { findClosestSpecies } from "@/lib/narrative/matchSpecies";
 import { buildShareUrl, encodeAnswers } from "@/lib/share";
 import { useGame } from "@/store/game";
+import { contributeToTwin } from "@/lib/contribute";
 
 export function ResultScreen() {
   const finalCreature = useGame((s) => s.finalCreature);
@@ -16,6 +17,7 @@ export function ResultScreen() {
   const environmentAnswers = useGame((s) => s.environmentAnswers);
   const reset = useGame((s) => s.reset);
   const headingRef = useRef<HTMLHeadingElement | null>(null);
+  const twinContributed = useRef(false);
 
   const portrait = useMemo(() => {
     if (!finalCreature || !eras) return null;
@@ -33,14 +35,23 @@ export function ResultScreen() {
     return buildShareUrl(code);
   }, [emotionAnswers, environmentAnswers]);
 
-  // 結果画面に入ったら、スクリーンリーダーが種名を読み上げるために
-  // 見出しへフォーカスを移す。ユーザーのスクロール位置もトップへ。
   useEffect(() => {
     if (typeof window !== "undefined") {
       window.scrollTo({ top: 0, behavior: "auto" });
     }
     headingRef.current?.focus();
   }, []);
+
+  useEffect(() => {
+    if (twinContributed.current || !portrait || !finalCreature) return;
+    twinContributed.current = true;
+    contributeToTwin('evolve', {
+      creatureName: portrait.name,
+      emotionAwakening: finalCreature.emotionAwakening,
+      milestones: finalCreature.milestones,
+      eraCount: finalCreature.eraHistory.length,
+    });
+  }, [portrait, finalCreature]);
 
   if (!finalCreature || !eras || !portrait) return null;
 
@@ -93,7 +104,6 @@ export function ResultScreen() {
         <section aria-labelledby="title-timeline" className="space-y-6">
           <SectionTitle id="title-timeline">系譜</SectionTitle>
           <ol className="relative space-y-8 pl-7 sm:pl-8">
-            {/* 縦に通った進化の軸 */}
             <div
               aria-hidden="true"
               className="pointer-events-none absolute left-[10px] top-2 bottom-2 w-px bg-line sm:left-3"
@@ -116,7 +126,6 @@ export function ResultScreen() {
                   transition={{ duration: 0.4, delay: 0.5 + idx * 0.1 }}
                   className="relative"
                 >
-                  {/* ノード（節点） */}
                   <span
                     aria-hidden="true"
                     className={`absolute -left-7 top-2 inline-block h-[10px] w-[10px] rounded-full border border-accent sm:-left-8 sm:top-2.5 ${
@@ -128,7 +137,6 @@ export function ResultScreen() {
                     }`}
                   />
 
-                  {/* エラ見出し */}
                   <div className="flex items-baseline justify-between gap-3">
                     <p className="font-serif-jp text-[0.7rem] tracking-[0.3em] text-muted">
                       第{result.eraIndex + 1}期 ・ {era.title}
@@ -143,7 +151,6 @@ export function ResultScreen() {
                     {era.biomeLabel}
                   </h3>
 
-                  {/* 環境 → 変化（変異） */}
                   {result.mutations.length > 0 ? (
                     <ul className="mt-3 space-y-1.5">
                       {result.mutations.map((m, i) => (
@@ -169,7 +176,6 @@ export function ResultScreen() {
                     </p>
                   )}
 
-                  {/* 解禁されたマイルストーン */}
                   {result.triggeredMilestones.length > 0 && (
                     <ul className="mt-3 space-y-1.5">
                       {result.triggeredMilestones.map((name) => (
@@ -191,7 +197,6 @@ export function ResultScreen() {
                     </ul>
                   )}
 
-                  {/* 感情の芽生え */}
                   {awakeningEvent && (
                     <p className="mt-3 font-serif-jp text-xs italic text-muted">
                       — {awakeningEvent} が兆した —
@@ -203,7 +208,6 @@ export function ResultScreen() {
           </ol>
         </section>
 
-        {/* --- Earth cousins --- */}
         {cousins.length > 0 && (
           <>
             <Divider />
@@ -238,7 +242,6 @@ export function ResultScreen() {
           </>
         )}
 
-        {/* --- Milestones --- */}
         {finalCreature.milestones.length > 0 && (
           <>
             <Divider />
@@ -265,7 +268,6 @@ export function ResultScreen() {
           </>
         )}
 
-        {/* --- Awakening --- */}
         <Divider />
         <section aria-labelledby="title-awakening" className="space-y-3">
           <SectionTitle id="title-awakening">感情の芽生え</SectionTitle>
@@ -283,7 +285,6 @@ export function ResultScreen() {
           </p>
         </section>
 
-        {/* --- Footer --- */}
         <div className="pt-8 flex flex-col items-center gap-4 sm:pt-10 sm:flex-row sm:justify-center">
           {shareUrl && <ShareButton url={shareUrl} />}
           <button
@@ -308,7 +309,6 @@ function ShareButton({ url }: { url: string }) {
         await navigator.clipboard.writeText(url);
         setState("copied");
       } else {
-        // 非対応環境は URL を prompt で表示するフォールバック
         window.prompt("このURLを共有できます", url);
         setState("copied");
       }
