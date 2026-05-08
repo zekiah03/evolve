@@ -9,6 +9,7 @@ import {
 } from "@/lib/engine/profile";
 import { simulateAll } from "@/lib/engine/simulator";
 import { decodeAnswers } from "@/lib/share";
+import { contributeToTwin } from "@/lib/twin";
 import type {
   AnswerIndex,
   Creature,
@@ -119,9 +120,16 @@ export const useGame = create<GameState>((set, get) => ({
   },
 
   finishSimulating: () => {
-    const { phase } = get();
+    const { phase, finalCreature, emotionProfile, environmentProfile } = get();
     if (phase !== "simulating") return;
     set({ phase: "result" });
+    if (typeof window !== "undefined" && finalCreature && emotionProfile) {
+      contributeToTwin("evolve", {
+        awakeningStage: finalCreature.awakening,
+        emotionAxes: emotionProfile as unknown as Record<string, unknown>,
+        envAxes: (environmentProfile ?? {}) as unknown as Record<string, unknown>,
+      });
+    }
   },
 
   loadFromShareCode: (code) => {
